@@ -5,7 +5,7 @@
  */
 
 resource "azurerm_virtual_network" "vnet" {
-  name                = lower("vnet-${lookup(local.regions, var.location, false)}-${var.service_prefix}")
+  name                = lower("vnet-${local.regions}-${var.service_prefix}-${var.environment}")
   address_space       = [var.vnet_address_prefix]
   location            = var.location
   resource_group_name = var.resource_group_name

@@ -6,14 +6,14 @@
 
 
 resource "azurerm_ai_services" "this" {
-  name                               = lower("ais-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+  name                               = lower("ais-${local.regions}-${var.service_prefix}-${var.environment}")
   location                           = var.location
   resource_group_name                = var.resource_group_name
   sku_name                           = var.sku_name
   local_authentication_enabled       = var.local_authentication_enabled
   outbound_network_access_restricted = var.local_authentication_enabled
   public_network_access              = var.public_network_access
-  custom_subdomain_name              = var.custom_subdomain_name != "" ? var.custom_subdomain_name : lower("ais-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+  custom_subdomain_name              = var.custom_subdomain_name != "" ? var.custom_subdomain_name : lower("ais-${local.regions}-${var.service_prefix}-${var.environment}")
 
   tags = var.tags
 

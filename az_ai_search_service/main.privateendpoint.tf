@@ -6,15 +6,15 @@ data "azurerm_private_dns_zone" "dns_zone" {
 resource "azurerm_private_endpoint" "this" {
   count                         = var.enable_private_endpoint ? 1 : 0
   location                      = var.location
-  name                          = "pep-srch-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}"
+  name                          = "pep-srch-${local.regions}-${var.service_prefix}-${var.environment}"
   resource_group_name           = var.resource_group_name
   subnet_id                     = var.subnet_id
-  custom_network_interface_name = "nic-pep-srch-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}"
+  custom_network_interface_name = "nic-pep-srch-${local.regions}-${var.service_prefix}-${var.environment}"
   tags                          = var.tags
 
   private_service_connection {
     is_manual_connection           = false
-    name                           = lower("psc-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+    name                           = lower("psc-${local.regions}-${var.service_prefix}-${var.environment}")
     private_connection_resource_id = azurerm_search_service.this.id
     subresource_names              = ["searchService"]
   }

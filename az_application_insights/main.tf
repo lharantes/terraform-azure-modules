@@ -5,7 +5,7 @@
  */
 
 resource "azurerm_application_insights" "this" {
-  name                = lower("appi-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+  name                = lower("appi-${local.regions}-${var.service_prefix}-${var.environment}")
   location            = var.location
   resource_group_name = var.resource_group_name
   workspace_id        = var.log_analytics_workspace

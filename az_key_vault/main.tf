@@ -7,7 +7,7 @@
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "this" {
-  name                = lower("kv-bdso-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+  name                = lower("kv-bdso-${local.regions}-${var.service_prefix}-${var.environment}")
   location            = var.location
   resource_group_name = var.resource_group_name
   tenant_id           = data.azurerm_client_config.current.tenant_id

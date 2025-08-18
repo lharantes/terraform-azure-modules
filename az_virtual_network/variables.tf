@@ -42,9 +42,10 @@ variable "dns_servers" {
 
 # Subnets
 variable "subnet" {
-  type = object({
+  type = map(object({
     address_prefixes  = string
+    name              = optional(string, null)
     service_endpoints = optional(list(string), null)
-  })
+  }))
   description = "A map of subnets for Virtual Network"
 }

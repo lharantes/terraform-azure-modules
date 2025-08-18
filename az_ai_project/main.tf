@@ -6,7 +6,7 @@
 
 resource "azurerm_ai_foundry_project" "this" {
   # Name: proj-brs-genai-dev
-  name               = lower("proj-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}")
+  name               = lower("proj-${local.regions}-${var.service_prefix}-${var.environment}")
   location           = var.location
   ai_services_hub_id = var.hub_id
   friendly_name      = var.friendly_name != "" ? var.friendly_name : null

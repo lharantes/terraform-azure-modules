@@ -7,7 +7,7 @@ data "azurerm_private_dns_zone" "dns_zone" {
 resource "azurerm_private_endpoint" "this" {
   count                         = var.enable_private_endpoint ? 1 : 0
   location                      = var.location
-  name                          = "pep-kv-bdso-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}"
+  name                          = "pep-kv-bdso-${local.regions}-${var.service_prefix}-${var.environment}"
   resource_group_name           = var.resource_group_name
   subnet_id                     = var.subnet_id
   custom_network_interface_name = "nic-pep-kv-bdso-${lookup(local.regions, var.location, false)}-${var.service_prefix}-${var.environment}"
