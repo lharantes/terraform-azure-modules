@@ -1,4 +1,5 @@
 data "azurerm_private_dns_zone" "dns_zone" {
+  count                         = var.enable_private_endpoint ? 1 : 0
   name                = "privatelink.api.azureml.ms"
   resource_group_name = var.dns_resource_group_name
 }
