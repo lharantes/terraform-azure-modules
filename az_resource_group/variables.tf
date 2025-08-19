@@ -22,10 +22,11 @@ variable "environment" {
   nullable    = false
 
   validation {
-    condition     = alltrue([contains(["prd", "dev", "qua"], var.environment)])
-    error_message = "Environment name must have one of: 'prd', 'dev', 'qua'."
+    condition     = alltrue([contains(["prd", "dev", "qua", "poc"], var.environment)])
+    error_message = "Environment name must have one of: 'prd', 'dev', 'qua' or 'poc'."
   }
 }
 
 # variable "subscription_id" {}
 # variable "tenant_id" {}
+
