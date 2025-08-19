@@ -1,179 +1,126 @@
+variable "environment" {
+  type        = string
+  description = "Environment project (dev, qua or prd)."
+}
+
+variable "service_prefix" {
+  type        = string
+  description = "Prefix or name of the project."
+}
+
 variable "location" {
   type        = string
-  description = <<DESCRIPTION
-Azure region where the resource should be deployed.
-If null, the location will be inferred from the resource group location.
-DESCRIPTION
-  nullable    = false
+  description = "Specifies the supported Azure location where the resource exists."
 }
 
-variable "name" {
-  type        = string
-  description = "The name of the resource."
-
-  validation {
-    condition     = can(regex("^[a-z0-9]{3,24}$", var.name))
-    error_message = "The name must be between 3 and 24 characters, valid characters are lowercase letters and numbers."
-  }
+variable "region_abbreviations" {
+  type        = map(string)
+  description = "Map of Azure locations to abbreviations. Recommended to pass from the shared modules/region-abbreviations module."
 }
 
-# This is required for most resource modules
 variable "resource_group_name" {
   type        = string
-  description = "The resource group where the resources will be deployed."
-}
-
-variable "customer_managed_key" {
-  type = object({
-    key_vault_resource_id = string
-    key_name              = string
-    key_version           = optional(string, null)
-    user_assigned_identity = optional(object({
-      resource_id = string
-    }), null)
-  })
-  default     = null
-  description = <<DESCRIPTION
-    Defines a customer managed key to use for encryption.
-
-    object({
-      key_vault_resource_id              = (Required) - The full Azure Resource ID of the key_vault where the customer managed key will be referenced from.
-      key_name                           = (Required) - The key name for the customer managed key in the key vault.
-      key_version                        = (Optional) - The version of the key to use
-      user_assigned_identity_resource_id = (Optional) - The user assigned identity to use when access the key vault
-    })
-
-    Example Inputs:
-    ```terraform
-    customer_managed_key = {
-      key_vault_resource_id = "/subscriptions/0000000-0000-0000-0000-000000000000/resourceGroups/test-resource-group/providers/Microsoft.KeyVault/vaults/example-key-vault"
-      key_name              = "sample-customer-key"
-    }
-    ```
-   DESCRIPTION
-}
-
-variable "lock" {
-  type = object({
-    name = optional(string, null)
-    kind = string
-  })
-  default     = null
-  description = "The lock level to apply. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`."
-
-  validation {
-    condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
-    error_message = "Lock kind must be either `\"CanNotDelete\"` or `\"ReadOnly\"`."
-  }
-}
-
-variable "managed_identities" {
-  type = object({
-    system_assigned            = optional(bool, false)
-    user_assigned_resource_ids = optional(set(string), [])
-  })
-  default     = {}
-  description = <<DESCRIPTION
-  Controls the Managed Identity configuration on this resource. The following properties can be specified:
-
-  - `system_assigned` - (Optional) Specifies if the System Assigned Managed Identity should be enabled.
-  - `user_assigned_resource_ids` - (Optional) Specifies a list of User Assigned Managed Identity resource IDs to be assigned to this resource.
-  DESCRIPTION
-  nullable    = false
-}
-
-variable "private_endpoints" {
-  type = map(object({
-    name = optional(string, null)
-    role_assignments = optional(map(object({
-      role_definition_id_or_name             = string
-      principal_id                           = string
-      description                            = optional(string, null)
-      skip_service_principal_aad_check       = optional(bool, false)
-      condition                              = optional(string, null)
-      condition_version                      = optional(string, null)
-      delegated_managed_identity_resource_id = optional(string, null)
-      principal_type                         = optional(string, null)
-    })), {})
-    lock = optional(object({
-      kind = string
-      name = optional(string, null)
-    }), null)
-    tags                                    = optional(map(string), null)
-    subnet_resource_id                      = string
-    subresource_name                        = string
-    private_dns_zone_group_name             = optional(string, "default")
-    private_dns_zone_resource_ids           = optional(set(string), [])
-    application_security_group_associations = optional(map(string), {})
-    private_service_connection_name         = optional(string, null)
-    network_interface_name                  = optional(string, null)
-    location                                = optional(string, null)
-    resource_group_name                     = optional(string, null)
-    ip_configurations = optional(map(object({
-      name               = string
-      private_ip_address = string
-    })), {})
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of private endpoints to create on the resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-
-- `name` - (Optional) The name of the private endpoint. One will be generated if not set.
-- `role_assignments` - (Optional) A map of role assignments to create on the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time. See `var.role_assignments` for more information.
-- `lock` - (Optional) The lock level to apply to the private endpoint. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`.
-- `tags` - (Optional) A mapping of tags to assign to the private endpoint.
-- `subnet_resource_id` - The resource ID of the subnet to deploy the private endpoint in.
-- `subresource_name` - The service name of the private endpoint.  Possible value are `blob`, 'dfs', 'file', `queue`, `table`, and `web`.
-- `private_dns_zone_group_name` - (Optional) The name of the private DNS zone group. One will be generated if not set.
-- `private_dns_zone_resource_ids` - (Optional) A set of resource IDs of private DNS zones to associate with the private endpoint. If not set, no zone groups will be created and the private endpoint will not be associated with any private DNS zones. DNS records must be managed external to this module.
-- `application_security_group_resource_ids` - (Optional) A map of resource IDs of application security groups to associate with the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-- `private_service_connection_name` - (Optional) The name of the private service connection. One will be generated if not set.
-- `network_interface_name` - (Optional) The name of the network interface. One will be generated if not set.
-- `location` - (Optional) The Azure location where the resources will be deployed. Defaults to the location of the resource group.
-- `resource_group_name` - (Optional) The resource group where the resources will be deployed. Defaults to the resource group of the resource.
-- `ip_configurations` - (Optional) A map of IP configurations to create on the private endpoint. If not specified the platform will create one. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-  - `name` - The name of the IP configuration.
-  - `private_ip_address` - The private IP address of the IP configuration.
-DESCRIPTION
-  nullable    = false
-}
-
-variable "private_endpoints_manage_dns_zone_group" {
-  type        = bool
-  default     = true
-  description = "Whether to manage private DNS zone groups with this module. If set to false, you must manage private DNS zone groups externally, e.g. using Azure Policy."
-  nullable    = false
-}
-
-variable "role_assignments" {
-  type = map(object({
-    role_definition_id_or_name             = string
-    principal_id                           = string
-    description                            = optional(string, null)
-    skip_service_principal_aad_check       = optional(bool, false)
-    condition                              = optional(string, null)
-    condition_version                      = optional(string, null)
-    delegated_managed_identity_resource_id = optional(string, null)
-    principal_type                         = optional(string, null)
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of role assignments to create on the resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-
-- `role_definition_id_or_name` - The ID or name of the role definition to assign to the principal.
-- `principal_id` - The ID of the principal to assign the role to.
-- `description` - The description of the role assignment.
-- `skip_service_principal_aad_check` - If set to true, skips the Azure Active Directory check for the service principal in the tenant. Defaults to false.
-- `condition` - The condition which will be used to scope the role assignment.
-- `condition_version` - The version of the condition syntax. Valid values are '2.0'.
-
-> Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
-DESCRIPTION
-  nullable    = false
+  description = "The name of the Resource Group where the AI Foundry Hub should exist. Changing this forces a new AI Foundry Hub to be created."
 }
 
 variable "tags" {
   type        = map(string)
+  default     = {}
+  description = "Optional tags to add to resources."
+}
+
+variable "account_tier" {
+  type        = string
+  default     = "Standard"
+  description = "Defines the Tier to use for this storage account. Valid options are `Standard` and `Premium`. For `BlockBlobStorage` and `FileStorage` accounts only `Premium` is valid. Changing this forces a new resource to be created."
+  nullable    = false
+
+  validation {
+    condition     = contains(["Standard", "Premium"], var.account_tier)
+    error_message = "Invalid value for account tier. Valid options are `Standard` and `Premium`. For `BlockBlobStorage` and `FileStorage` accounts only `Premium` is valid. Changing this forces a new resource to be created."
+  }
+}
+
+variable "account_replication_type" {
+  type        = string
+  default     = "LRS"
+  description = "Defines the type of replication to use for this storage account. Valid options are `LRS`, `GRS`, `RAGRS`, `ZRS`, `GZRS` and `RAGZRS`.  Defaults to `ZRS`"
+  nullable    = false
+
+  validation {
+    condition     = contains(["LRS", "GRS", "RAGRS", "ZRS", "GZRS", "RAGZRS"], var.account_replication_type)
+    error_message = "Invalid value for replication type. Valid options are `LRS`, `GRS`, `RAGRS`, `ZRS`, `GZRS` and `RAGZRS`."
+  }
+}
+
+variable "public_network_access_enabled" {
+  type        = bool
+  default     = false
+  description = "Whether the public network access is enabled? Defaults to `true`."
+}
+
+variable "account_kind" {
+  type        = string
+  default     = "StorageV2"
+  description = "Defines the Kind of account. Valid options are `BlobStorage`, `BlockBlobStorage`, `FileStorage`, `Storage` and `StorageV2`. Defaults to `StorageV2`."
+
+  validation {
+    condition     = contains(["BlobStorage", "BlockBlobStorage", "FileStorage", "Storage", "StorageV2"], var.account_kind)
+    error_message = "Invalid value for account kind. Valid options are `BlobStorage`, `BlockBlobStorage`, `FileStorage`, `Storage` and `StorageV2`. Defaults to `StorageV2`."
+  }
+}
+
+variable "access_tier" {
+  type        = string
+  default     = "Hot"
+  description = "Defines the access tier for BlobStorage, FileStorage and StorageV2 accounts. Valid options are Hot, Cool, Cold and Premium. Defaults to Hot."
+
+  validation {
+    condition     = contains(["Hot", "Cool", "Premium", "Cold"], var.access_tier)
+    error_message = "Invalid value for access tier. Valid options are 'Hot', 'Cool','Premium' or 'Cold'."
+  }
+}
+
+variable "large_file_share_enabled" {
+  type        = bool
+  default     = false
+  description = "Are Large File Shares Enabled?"
+}
+
+variable "is_hns_enabled" {
+  type        = bool
+  default     = false
+  description = "Is Hierarchical Namespace enabled? This can be used with Azure Data Lake Storage Gen 2"
+}
+
+variable "sftp_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable SFTP for the storage account. SFTP support requires 'is_hns_enabled' set to true"
+}
+
+# Private Endpoint 
+
+variable "dns_resource_group_name" {
+  type        = string
   default     = null
-  description = "Custom tags to apply to the resource."
+  description = "Private dns for the private endpoint."
+}
+
+variable "subnet_id" {
+  type        = string
+  default     = null
+  description = "Subnet ID for the private endpoint."
+}
+
+variable "private_endpoints" {
+  type = map(object({
+    name                          = optional(string, null)
+    subnet_id                     = string
+    subresource_name              = string
+    private_dns_zone_group_name   = optional(string, "default")
+    private_dns_zone_resource_ids = optional(set(string), [])
+  }))
+  default  = {}
+  nullable = false
 }

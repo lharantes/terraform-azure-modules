@@ -42,7 +42,7 @@ variable "sku_bastion" {
 
 variable "allocation_method" {
   type        = string
-  default = "Static"
+  default     = "Static"
   description = "The allocation method for this IP address."
 
   validation {
